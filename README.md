@@ -1,62 +1,117 @@
+# PresentationGenie
 
-## 📋 Overview
+An AI-powered chatbot presentation app built with Flutter, featuring a clean and modern interface inspired by mihFIBER design.
 
-Genie AI Mobile is a powerful AI assistant application built with Flutter that provides real-time conversational AI capabilities through WebSocket streaming. The app features AWS Cognito authentication, markdown-rendered responses with syntax highlighting, and comprehensive file handling capabilities.
+## Features
 
-## ✨ Features
+### 🚀 Core Screens
+- **Splash Screen**: Animated mihFIBER branding with loading indicator
+- **Login Screen**: Email/password authentication with Microsoft login option and base URL configuration
+- **Chat Screen**: Clean chat interface with AI assistant interaction
+- **Settings Screen**: Comprehensive settings with profile management and configuration options
 
-### 🔐 Authentication
-- **AWS Cognito Integration**: Secure user authentication
-- Email/Password login
-- Forgot password functionality
-- Session management with token refresh
+### 🎨 Design Highlights
+- Modern Material Design 3 implementation
+- Custom gradient branding elements
+- Reusable widget components
+- Responsive and accessible UI
+- Clean typography and spacing
 
-### 💬 Real-time Chat
-- **WebSocket Streaming**: Real-time message streaming using STOMP protocol
-- **Markdown Support**: Beautiful markdown rendering with:
-  - Syntax-highlighted code blocks
-  - Multiple language support
-  - Copy-to-clipboard functionality
-  - Line numbering
-- **Smart Message Bubbles**:
-  - User messages (right-aligned)
-  - Assistant responses (left-aligned)
-  - Streaming indicators
+### 🛠 Technical Features
+- **Clean Architecture**: Organized folder structure with separation of concerns
+- **Reusable Components**: Custom buttons, text fields, and modal dialogs
+- **State Management**: Efficient state handling with StatefulWidget
+- **Navigation**: Smooth screen transitions and navigation flow
+- **Form Validation**: Comprehensive input validation for all forms
+- **Base URL Configuration**: Dynamic API endpoint configuration through settings modal
 
-### 📁 File Management
-- **Multi-source Upload**:
-  - 📷 Camera capture
-  - 🖼️ Gallery selection
-  - 📄 File picker (documents, images, etc.)
-- **File Mentions**: @ mention files in conversation
-- **Drag & Drop** support (tablets)
+## Project Structure
 
-### 📜 Chat History
-- **Session Management**:
-  - Save/Load chat sessions
-  - Session organization by project
-  - Search through history
-- **Hamburger Menu Drawer**: Easy access to all past conversations
-- **Local Storage**: Offline access to chat history
+```
+lib/
+├── core/
+│   └── constants/
+│       ├── app_colors.dart      # Color palette and theme colors
+│       ├── app_strings.dart     # Centralized string constants
+│       └── app_assets.dart      # Asset path constants
+├── screens/
+│   ├── splash_screen.dart       # App launch screen
+│   ├── login_screen.dart        # Authentication screen
+│   ├── chat_screen.dart         # Main chat interface
+│   └── settings_screen.dart     # Settings and configuration
+├── widgets/
+│   ├── custom_button.dart       # Reusable button component
+│   ├── custom_text_field.dart   # Reusable input field component
+│   └── configure_modal.dart     # Base URL configuration dialog
+└── main.dart                    # App entry point and theme configuration
+```
 
-### 🎨 UI/UX
-- Modern Material Design 3
-- Dark/Light theme support
-- Smooth animations
-- Pull-to-refresh
-- Responsive layouts (phone & tablet)
+## Getting Started
 
-## 🔧 Project Configuration
+### Prerequisites
+- Flutter SDK (3.9.0 or higher)
+- Dart SDK
+- iOS Simulator / Android Emulator or physical device
 
-1. Run `flutter pub get`
-2. Run `dart run build_runner build`
-3. Run `flutter gen-l10n`
-3. Copy and paste provided `.jks` files to `android/app` directory
-4. Copy and paste provided `key.properties` file to `android` directory
-5. Add provided iOS certificates and provisioning profiles to Keychain Access.
-  - To do so, simply double click on each file.
-  - When adding certificates, you will be prompted to enter a password. You may find it in the `readme.md` file that is provided with certificates and provisioning profiles.
-7. (Android Studio): Add run configurations for development and production environments.
-  - Development: Set `Dart entrypoint` to `lib/main_dev.dart` and set build flavor to `development`
-  - Production: Set `Dart entrypoint` to `lib/main.dart` and set build flavor to `production`
-8. `flutter run --flavor <desired-flavor>`
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd presentationgenie
+   ```
+
+2. **Install dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the app**
+   ```bash
+   flutter run
+   ```
+
+### Configuration
+
+The app includes a configuration modal accessible from the login screen that allows you to set:
+- **Base URL**: Configure the API endpoint for your AI chatbot service
+
+## App Flow
+
+1. **Splash Screen** (3 seconds) → **Login Screen**
+2. **Login Screen** → **Chat Screen** (after authentication)
+3. **Chat Screen** ↔ **Settings Screen** (via app bar icon)
+4. **Settings Screen** → **Login Screen** (sign out)
+
+## Key Components
+
+### Custom Widgets
+- **CustomButton**: Supports primary, secondary, and outline styles with loading states
+- **CustomTextField**: Includes validation, prefix/suffix icons, and password visibility toggle
+- **ConfigureModal**: Reusable dialog for base URL configuration
+
+### Color Scheme
+- Primary colors: Purple (#8B5CF6), Blue (#3B82F6), Green (#10B981), Orange (#F59E0B)
+- UI colors: Clean whites and grays for optimal readability
+- Semantic colors: Success, error, and warning states
+
+## Development Notes
+
+- **Material Design 3**: Uses the latest Material Design guidelines
+- **Responsive Design**: Adapts to different screen sizes
+- **Accessibility**: Proper semantic labels and contrast ratios
+- **Performance**: Optimized widget rebuilds and efficient state management
+
+## Future Enhancements
+
+- [ ] Real API integration for chat functionality
+- [ ] Push notifications
+- [ ] Dark mode support
+- [ ] Multi-language support
+- [ ] Chat history persistence
+- [ ] File upload capabilities
+- [ ] Voice input support
+
+## License
+
+This project is created for presentation and demonstration purposes.

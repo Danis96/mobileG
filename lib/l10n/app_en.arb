@@ -1,0 +1,409 @@
+{
+  "@@locale": "en",
+  "appName": "PresentationGenie",
+  "@appName": {
+    "description": "The name of the application"
+  },
+  "mihFiber": "mihFIBER",
+  "@mihFiber": {
+    "description": "mihFIBER brand name"
+  },
+  "fiberOpticNetworkTechnology": "FIBER OPTIC NETWORK TECHNOLOGY",
+  "@fiberOpticNetworkTechnology": {
+    "description": "Fiber optic network technology tagline"
+  },
+  "configure": "Configure",
+  "@configure": {
+    "description": "Configure button text"
+  },
+  "welcomeBack": "Welcome",
+  "@welcomeBack": {
+    "description": "Welcome message on login screen"
+  },
+  "logInToYourAccount": "Log in to your account",
+  "@logInToYourAccount": {
+    "description": "Login instruction text"
+  },
+  "continueWithMicrosoft": "Continue with Microsoft",
+  "@continueWithMicrosoft": {
+    "description": "Microsoft login button text"
+  },
+  "lastUsed": "Last used",
+  "@lastUsed": {
+    "description": "Last used indicator"
+  },
+  "or": "or",
+  "@or": {
+    "description": "Or separator text"
+  },
+  "emailAddress": "Email address",
+  "@emailAddress": {
+    "description": "Email address field label"
+  },
+  "enterYourEmailAddress": "Enter your email address",
+  "@enterYourEmailAddress": {
+    "description": "Email address field placeholder"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+  "enterYourPassword": "Enter your password",
+  "@enterYourPassword": {
+    "description": "Password field placeholder"
+  },
+  "signIn": "Sign In",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+  "byContinuingYouAcknowledge": "By continuing, you acknowledge that you understand and agree to the ",
+  "@byContinuingYouAcknowledge": {
+    "description": "Privacy policy agreement text"
+  },
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Privacy policy link text"
+  },
+  "configureBaseUrl": "Configure Base URL",
+  "@configureBaseUrl": {
+    "description": "Configure base URL modal title"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "Base URL field label"
+  },
+  "enterBaseUrl": "Enter your base URL",
+  "@enterBaseUrl": {
+    "description": "Base URL field placeholder"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "baseUrlDescription": "Set the base URL for your AI chatbot API endpoint. This will be used for all API communications.",
+  "@baseUrlDescription": {
+    "description": "Base URL configuration description"
+  },
+  "whatsOnTheAgendaToday": "What's on the agenda today?",
+  "@whatsOnTheAgendaToday": {
+    "description": "Chat screen welcome message"
+  },
+  "askAnything": "Ask anything",
+  "@askAnything": {
+    "description": "Chat input placeholder"
+  },
+  "chatGpt": "ChatGPT",
+  "@chatGpt": {
+    "description": "ChatGPT reference"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "account": "Account",
+  "@account": {
+    "description": "Account settings section"
+  },
+  "preferences": "Preferences",
+  "@preferences": {
+    "description": "Preferences settings section"
+  },
+  "about": "About",
+  "@about": {
+    "description": "About settings section"
+  },
+  "signOut": "Sign Out",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+  "german": "German",
+  "@german": {
+    "description": "German language option"
+  },
+  "helpAndSupport": "Help & Support",
+  "@helpAndSupport": {
+    "description": "Help and support menu item"
+  },
+  "getHelpAndContactSupport": "Get help and contact support",
+  "@getHelpAndContactSupport": {
+    "description": "Help and support description"
+  },
+  "readOurPrivacyPolicy": "Read our privacy policy",
+  "@readOurPrivacyPolicy": {
+    "description": "Privacy policy description"
+  },
+  "version": "Version 1.0.0",
+  "@version": {
+    "description": "App version text"
+  },
+  "baseUrlConfiguration": "Base URL Configuration",
+  "@baseUrlConfiguration": {
+    "description": "Base URL configuration menu item"
+  },
+  "notConfigured": "Not configured",
+  "@notConfigured": {
+    "description": "Not configured status text"
+  },
+  "languageSettingsComingSoon": "Language settings coming soon",
+  "@languageSettingsComingSoon": {
+    "description": "Language settings placeholder message"
+  },
+  "helpAndSupportComingSoon": "Help & Support coming soon",
+  "@helpAndSupportComingSoon": {
+    "description": "Help and support placeholder message"
+  },
+  "privacyPolicyComingSoon": "Privacy Policy coming soon",
+  "@privacyPolicyComingSoon": {
+    "description": "Privacy policy placeholder message"
+  },
+  "presentationGenieVersion": "PresentationGenie v1.0.0",
+  "@presentationGenieVersion": {
+    "description": "App version with name"
+  },
+  "areYouSureYouWantToSignOut": "Are you sure you want to sign out?",
+  "@areYouSureYouWantToSignOut": {
+    "description": "Sign out confirmation message"
+  },
+  "baseUrlUpdatedSuccessfully": "Base URL updated successfully",
+  "@baseUrlUpdatedSuccessfully": {
+    "description": "Base URL update success message"
+  },
+  "baseUrlConfiguredSuccessfully": "Base URL configured successfully",
+  "@baseUrlConfiguredSuccessfully": {
+    "description": "Base URL configuration success message"
+  },
+  "startAConversationWithPresentationGenie": "Start a conversation with PresentationGenie",
+  "@startAConversationWithPresentationGenie": {
+    "description": "Chat screen subtitle"
+  },
+  "hiJohnDoe": "Hi, John Doe",
+  "@hiJohnDoe": {
+    "description": "Greeting in drawer"
+  },
+  "chatHistory": "Chat History",
+  "@chatHistory": {
+    "description": "Chat history section title"
+  },
+  "newChatStarted": "New chat started",
+  "@newChatStarted": {
+    "description": "New chat notification"
+  },
+  "deleteChat": "Delete Chat",
+  "@deleteChat": {
+    "description": "Delete chat dialog title"
+  },
+  "areYouSureYouWantToDeleteChat": "Are you sure you want to delete \"{title}\"?",
+  "@areYouSureYouWantToDeleteChat": {
+    "description": "Delete chat confirmation message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Marketing Strategy Presentation"
+      }
+    }
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  "chatDeleted": "Chat \"{title}\" deleted",
+  "@chatDeleted": {
+    "description": "Chat deletion confirmation",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Marketing Strategy Presentation"
+      }
+    }
+  },
+  "loadingChat": "Loading chat: {title}",
+  "@loadingChat": {
+    "description": "Loading chat message",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Marketing Strategy Presentation"
+      }
+    }
+  },
+  "addPhotos": "Add photos",
+  "@addPhotos": {
+    "description": "Add photos menu option"
+  },
+  "takePhoto": "Take photo",
+  "@takePhoto": {
+    "description": "Take photo menu option"
+  },
+  "addFiles": "Add files",
+  "@addFiles": {
+    "description": "Add files menu option"
+  },
+  "addPhotosSelected": "Add photos selected",
+  "@addPhotosSelected": {
+    "description": "Add photos selection confirmation"
+  },
+  "takePhotoSelected": "Take photo selected",
+  "@takePhotoSelected": {
+    "description": "Take photo selection confirmation"
+  },
+  "addFilesSelected": "Add files selected",
+  "@addFilesSelected": {
+    "description": "Add files selection confirmation"
+  },
+  "emailIsRequired": "Email is required",
+  "@emailIsRequired": {
+    "description": "Email validation error"
+  },
+  "pleaseEnterAValidEmailAddress": "Please enter a valid email address",
+  "@pleaseEnterAValidEmailAddress": {
+    "description": "Email format validation error"
+  },
+  "passwordIsRequired": "Password is required",
+  "@passwordIsRequired": {
+    "description": "Password validation error"
+  },
+  "passwordMustBeAtLeast6Characters": "Password must be at least 6 characters",
+  "@passwordMustBeAtLeast6Characters": {
+    "description": "Password length validation error"
+  },
+  "baseUrlIsRequired": "Base URL is required",
+  "@baseUrlIsRequired": {
+    "description": "Base URL validation error"
+  },
+  "pleaseEnterAValidUrl": "Please enter a valid URL",
+  "@pleaseEnterAValidUrl": {
+    "description": "URL format validation error"
+  },
+  "informationWeCollect": "Information We Collect",
+  "@informationWeCollect": {
+    "description": "Privacy policy section title"
+  },
+  "informationWeCollectContent": "We collect information you provide directly to us, such as when you create an account, use our services, or contact us for support. This may include your name, email address, and usage data.",
+  "@informationWeCollectContent": {
+    "description": "Privacy policy information collection content"
+  },
+  "howWeUseYourInformation": "How We Use Your Information",
+  "@howWeUseYourInformation": {
+    "description": "Privacy policy section title"
+  },
+  "howWeUseYourInformationContent": "We use the information we collect to provide, maintain, and improve our services, process transactions, send you technical notices and support messages, and communicate with you about products, services, and promotional offers.",
+  "@howWeUseYourInformationContent": {
+    "description": "Privacy policy information usage content"
+  },
+  "informationSharing": "Information Sharing",
+  "@informationSharing": {
+    "description": "Privacy policy section title"
+  },
+  "informationSharingContent": "We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this privacy policy. We may share your information with trusted service providers who assist us in operating our services.",
+  "@informationSharingContent": {
+    "description": "Privacy policy information sharing content"
+  },
+  "dataSecurity": "Data Security",
+  "@dataSecurity": {
+    "description": "Privacy policy section title"
+  },
+  "dataSecurityContent": "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure.",
+  "@dataSecurityContent": {
+    "description": "Privacy policy data security content"
+  },
+  "yourRights": "Your Rights",
+  "@yourRights": {
+    "description": "Privacy policy section title"
+  },
+  "yourRightsContent": "You have the right to access, update, or delete your personal information. You may also opt out of certain communications from us. To exercise these rights, please contact us using the information provided below.",
+  "@yourRightsContent": {
+    "description": "Privacy policy user rights content"
+  },
+  "contactUs": "Contact Us",
+  "@contactUs": {
+    "description": "Privacy policy section title"
+  },
+  "contactUsContent": "If you have any questions about this Privacy Policy, please contact us at privacy@mihfiber.com or through our support channels.",
+  "@contactUsContent": {
+    "description": "Privacy policy contact information"
+  },
+  "lastUpdated": "Last updated: November 2024\n\nThis privacy policy is effective as of the date listed above and will remain in effect except with respect to any changes in its provisions in the future.",
+  "@lastUpdated": {
+    "description": "Privacy policy last updated information"
+  },
+  "aiResponseMessage": "I understand your request. How can I help you with your presentation today?",
+  "@aiResponseMessage": {
+    "description": "Default AI response message"
+  },
+  "dayAgo": "{count} day ago",
+  "@dayAgo": {
+    "description": "Single day ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "daysAgo": "{count} days ago",
+  "@daysAgo": {
+    "description": "Multiple days ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "hourAgo": "{count} hour ago",
+  "@hourAgo": {
+    "description": "Single hour ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "hoursAgo": "{count} hours ago",
+  "@hoursAgo": {
+    "description": "Multiple hours ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "minuteAgo": "{count} minute ago",
+  "@minuteAgo": {
+    "description": "Single minute ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "minutesAgo": "{count} minutes ago",
+  "@minutesAgo": {
+    "description": "Multiple minutes ago timestamp",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "15"
+      }
+    }
+  },
+  "justNow": "Just now",
+  "@justNow": {
+    "description": "Just now timestamp"
+  }
+}
