@@ -1,104 +1,181 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gpt_markdown/custom_widgets/markdown_config.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:syntax_highlight/syntax_highlight.dart';
 
+import '../../widgets/collapse_code_block.dart';
 import '../constants/app_colors.dart';
 
 class MarkdownService {
   static Highlighter? _highlighter;
 
-  /// Initialize the syntax highlighter (call this once in main.dart)
+  /// Initialize syntax highlighting (call once in main.dart)
   static Future<void> initialize() async {
-    await Highlighter.initialize(
-      [
-        'dart',
-        'java',
-        'kotlin',
-        'swift',
-        'javascript',
-        'typescript',
-        'python',
-        'json',
-        'yaml',
-        'html',
-        'css',
-        'sql',
-        'go',
-        'rust',
-        'serverpod_protocol',
-      ],
-    );
+    await Highlighter.initialize([
+      'dart',
+      'java',
+      'kotlin',
+      'swift',
+      'javascript',
+      'typescript',
+      'python',
+      'json',
+      'yaml',
+      'html',
+      'css',
+      'sql',
+      'go',
+      'rust',
+      'serverpod_protocol',
+    ]);
+    final theme = await HighlighterTheme.loadDarkTheme();
+    _highlighter = Highlighter(language: 'dart', theme: theme);
+  }
 
-    // Create a default highlighter instance
-    final theme = await HighlighterTheme.loadDarkTheme(); // or loadLightTheme()
-    _highlighter = Highlighter(
-      language: 'dart',
-      theme: theme,
+  /// 🧩 Split markdown into chunks for streaming simulation
+  static List<String> splitIntoChunks(String text, {int chunkSize = 50}) {
+    final List<String> chunks = [];
+
+    // Split by words to avoid breaking mid-word for better visual flow
+    final List<String> words = text.split(' ');
+    String currentChunk = '';
+
+    for (final String word in words) {
+      if (currentChunk.length + word.length + 1 <= chunkSize) {
+        currentChunk += (currentChunk.isEmpty ? '' : ' ') + word;
+      } else {
+        if (currentChunk.isNotEmpty) {
+          chunks.add(currentChunk);
+          debugPrint(
+            '📦 Chunk ${chunks.length}: "${currentChunk.substring(0, currentChunk.length > 30 ? 30 : currentChunk.length)}${currentChunk.length > 30 ? '...' : ''}"',
+          );
+        }
+        currentChunk = word;
+      }
+    }
+
+    // Add the last chunk if it's not empty
+    if (currentChunk.isNotEmpty) {
+      chunks.add(currentChunk);
+      debugPrint(
+        '📦 Final Chunk ${chunks.length}: "${currentChunk.substring(0, currentChunk.length > 30 ? 30 : currentChunk.length)}${currentChunk.length > 30 ? '...' : ''}"',
+      );
+    }
+
+    debugPrint('🎯 Total chunks created: ${chunks.length}');
+    return chunks;
+  }
+
+  /// 🌊 Simulate streaming of markdown text
+  static Stream<String> simulateStreaming(
+    String fullText, {
+    Duration baseDelay = const Duration(milliseconds: 80),
+    Duration punctuationDelay = const Duration(milliseconds: 200),
+    Duration codeBlockDelay = const Duration(milliseconds: 150),
+  }) async* {
+    final List<String> chunks = splitIntoChunks(fullText, chunkSize: 50);
+    String buffer = '';
+
+    debugPrint('🚀 Starting streaming simulation with ${chunks.length} chunks');
+
+    for (int i = 0; i < chunks.length; i++) {
+      final String chunk = chunks[i];
+
+      // Determine delay based on content type
+      Duration delay = baseDelay;
+
+      // Longer delay after punctuation for natural reading rhythm
+      if (buffer.isNotEmpty && RegExp(r'[.!?]\s*$').hasMatch(buffer.trim())) {
+        delay = punctuationDelay;
+        debugPrint('⏸️ Punctuation pause detected');
+      }
+
+      // Longer delay for code blocks
+      if (chunk.contains('```') || chunk.contains('`')) {
+        delay = codeBlockDelay;
+        debugPrint('💻 Code block detected, using longer delay');
+      }
+
+      // Add slight randomness for more natural feel (±20ms)
+      final int randomOffset = (DateTime.now().millisecondsSinceEpoch % 40) - 20;
+      delay = Duration(milliseconds: delay.inMilliseconds + randomOffset);
+
+      await Future.delayed(delay);
+      buffer += (buffer.isEmpty ? '' : ' ') + chunk;
+
+      debugPrint('📝 Streaming chunk ${i + 1}/${chunks.length} (${chunk.length} chars) - Buffer length: ${buffer.length}');
+
+      yield buffer;
+    }
+
+    debugPrint('✅ Streaming completed! Final text length: ${buffer.length}');
+  }
+
+  /// 🧱 Standard Markdown rendering
+  Widget render(String markdownText, {bool selectable = true, TableBuilder? tableBuilder}) {
+    return _buildMarkdownWidget(markdownText, selectable: selectable, tableBuilder: tableBuilder);
+  }
+
+  /// 🚀 Streaming markdown renderer (rebuilds as chunks arrive)
+  Widget renderStreaming(Stream<String> markdownStream, {bool selectable = true, TableBuilder? tableBuilder}) {
+    return StreamBuilder<String>(
+      stream: markdownStream,
+      initialData: '',
+      builder: (context, snapshot) {
+        final text = snapshot.data ?? '';
+        return _buildMarkdownWidget(text, selectable: selectable, tableBuilder: tableBuilder);
+      },
     );
   }
 
-  /// Renders markdown text with custom colors and syntax highlighting.
-  Widget render(String markdownText, {bool selectable = true, TableBuilder? tableBuilder}) {
-    return GptMarkdownTheme(
+  /// Internal builder with proper selection support
+  Widget _buildMarkdownWidget(String markdownText, {bool selectable = true, TableBuilder? tableBuilder}) {
+    // Wrap the entire markdown in SelectionArea for Flutter 3.3+
+    Widget markdownWidget = GptMarkdownTheme(
       gptThemeData: GptMarkdownThemeData(
-        // Color parameters from theme
         highlightColor: AppColors.primaryOrange.withOpacity(0.3),
         hrLineColor: AppColors.borderGray,
         hrLineThickness: 1.5,
         linkColor: AppColors.primaryBlue,
         linkHoverColor: AppColors.primaryBlue.withOpacity(0.8),
-
-        // Heading styles (h1 to h6) with different colors from AppColors
         h1: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryPurple, height: 1.2),
         h2: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.primaryBlue, height: 1.3),
         h3: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: AppColors.primaryGreen, height: 1.4),
         h4: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.mihFiberGreen, height: 1.4),
         h5: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.mihFiberGray, height: 1.5),
         h6: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textTertiary, height: 1.5),
-        // Theme brightness
         brightness: Brightness.light,
       ),
       child: GptMarkdown(
         markdownText,
         tableBuilder: tableBuilder,
-
-        // GptMarkdown widget parameters
         maxLines: null,
         followLinkColor: true,
+        onLinkTap: (String href, String title) => debugPrint('Link tapped: $href'),
 
-        // Link handling with AppColors styling
-        onLinkTap: (String href, String title) {
-          debugPrint('Link tapped: $href, Title: $title');
-        },
+        /// 🔹 Code highlighting with selection and copy functionality
+        codeBuilder: (BuildContext context, String lang, String code, bool closed) {
+          final bool isLang = lang.isNotEmpty && lang.toLowerCase() != 'plaintext';
+          final Color bgColor = isLang ? AppColors.textPrimary : AppColors.backgroundGray;
 
-        // Custom code builder with syntax highlighting
-        codeBuilder: (BuildContext context, String name, String code, bool closed) {
-          return Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: AppColors.error,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.borderGray, width: 1.0),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.textTertiary.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                )
-              ],
-            ),
-            child: _buildHighlightedCode(code, name),
+          return CollapsibleCodeBlock(
+            code: code,
+            language: lang,
+            backgroundColor: bgColor,
+            selectable: selectable,
+            maxPreviewLines: 5, // Show first 5 lines by default
           );
         },
 
-        // Custom image builder with AppColors styling
+        /// 🔹 Image Builder (unchanged)
         imageBuilder: (BuildContext context, String imageUrl) {
           return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.borderGray, width: 1.0),
+              border: Border.all(color: AppColors.borderGray),
               boxShadow: [BoxShadow(color: AppColors.textTertiary.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
             ),
             child: ClipRRect(
@@ -106,30 +183,15 @@ class MarkdownService {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    padding: const EdgeInsets.all(16.0),
-                    color: AppColors.backgroundGray,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.broken_image, color: AppColors.textTertiary, size: 32),
-                        const SizedBox(height: 8),
-                        Text('Failed to load image', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                      ],
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => _buildImageError(),
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
                   if (loadingProgress == null) return child;
                   return Container(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16),
                     color: AppColors.backgroundGray,
                     child: Center(
                       child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                            : null,
+                        value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null,
                         color: AppColors.primaryBlue,
                         backgroundColor: AppColors.borderGray,
                       ),
@@ -140,105 +202,64 @@ class MarkdownService {
             ),
           );
         },
+      ),
+    );
+    // Wrap with SelectionArea for text selection if selectable is true
+    if (selectable) {
+      return SelectionArea(child: markdownWidget);
+    }
 
-        // Custom LaTeX builder with AppColors styling
-        latexBuilder: (BuildContext context, String latex, TextStyle? style, bool isInline) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            decoration: BoxDecoration(
-              color: AppColors.mihFiberAccent,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppColors.mihFiberGreen.withOpacity(0.3), width: 1.0),
-            ),
-            child: Text(
-              latex,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 14, color: AppColors.mihFiberGreenDark, fontWeight: FontWeight.w500),
-            ),
-          );
-        },
+    return markdownWidget;
+  }
 
-        // Custom link builder with AppColors styling
-        linkBuilder: (BuildContext context, InlineSpan linkSpan, String? href, TextStyle? style) {
-          return GestureDetector(
-            onTap: () {
-              if (href != null) {
-                debugPrint('Link tapped: $href');
-              }
-            },
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Text.rich(
-                linkSpan,
-                style: TextStyle(
-                  color: AppColors.primaryBlue,
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColors.primaryBlue,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          );
-        },
-
-        // LaTeX workaround function
-        latexWorkaround: (String latex) {
-          return latex;
-        },
-
-        // Custom components (can be extended later)
-        components: null,
-        inlineComponents: null,
+  Widget _buildImageError() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      color: AppColors.backgroundGray,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.broken_image, color: AppColors.textTertiary, size: 32),
+          const SizedBox(height: 8),
+          Text('Failed to load image', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        ],
       ),
     );
   }
 
-  /// Build syntax highlighted code
-  Widget _buildHighlightedCode(String code, String language) {
+  static Widget buildHighlightedCodeStatic(String code, String language, Color bgColor, bool selectable) {
+    final Color textColor = bgColor == AppColors.textPrimary
+        ? AppColors.backgroundWhite
+        : AppColors.textPrimary;
+
+    final TextStyle codeStyle = TextStyle(
+      fontFamily: 'monospace',
+      fontSize: 14,
+      color: textColor,
+      height: 1.5,
+    );
+
     if (_highlighter == null) {
-      // Fallback if highlighter not initialized
-      return SelectableText(
-        code,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 14,
-          color: AppColors.textPrimary,
-          height: 1.5,
-        ),
-      );
+      return selectable
+          ? SelectableText(code, style: codeStyle)
+          : Text(code, style: codeStyle);
     }
 
     try {
-      // Create a highlighter for this specific language
-      final highlighter = Highlighter(
+      final Highlighter highlighter = Highlighter(
         language: language.isNotEmpty ? language : 'plaintext',
         theme: _highlighter!.theme,
       );
+      final TextSpan highlighted = highlighter.highlight(code);
 
-      final highlighted = highlighter.highlight(code);
-
-      return SelectableText.rich(
-        TextSpan(
-          style: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 14,
-            height: 1.5,
-          ),
-          children: [highlighted],
-        ),
-      );
+      return selectable
+          ? SelectableText.rich(TextSpan(style: codeStyle, children: [highlighted]))
+          : Text.rich(TextSpan(style: codeStyle, children: [highlighted]));
     } catch (e) {
-      // Fallback on error
-      debugPrint('Syntax highlighting error: $e');
-      return SelectableText(
-        code,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 14,
-          color: AppColors.textPrimary,
-          height: 1.5,
-        ),
-      );
+      debugPrint('Highlight error: $e');
+      return selectable
+          ? SelectableText(code, style: codeStyle)
+          : Text(code, style: codeStyle);
     }
   }
 }

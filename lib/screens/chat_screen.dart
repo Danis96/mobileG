@@ -169,6 +169,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final markdownService = MarkdownService();
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -202,11 +203,12 @@ class _ChatScreenState extends State<ChatScreen> {
             child: _messages.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
+              shrinkWrap: true,
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
-                      return _messages[index].isUser ? _buildMessageBubble(_messages[index]) : markdownService.render(contentTomark);
+                      return _messages[index].isUser ? _buildMessageBubble(_messages[index]) : markdownService.renderStreaming(mockStream);
                     },
                   ),
           ),
@@ -420,7 +422,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  final String contentTomark = "```csharp\npublic class MyClass\n{\n    public void MyMethod()\n    {\n        // This is a code block in C#\n        int x = 10;\n        if (x > 5)\n        {\n            Console.WriteLine(\"x is greater than 5\");\n        }\n        else\n        {\n            Console.WriteLine(\"x is not greater than 5\");\n        }\n    }\n}\n```";
+  final String contentToMark = "Here's some detailed Markdown content for you to test, including headings, paragraphs, lists, code blocks, tables, hyperlinks, and image placeholders.\n\n---\n\n# Exploring the Wonders of Ancient Pyramids\n\nPyramids, those enigmatic structures reaching for the sky, have captivated humanity for millennia. From the scorching sands of Egypt to the lush jungles of Mesoamerica, these monumental constructions stand as testaments to ancient civilizations' ingenuity, beliefs, and organizational prowess.\n\n## The Great Pyramids of Giza: A Marvel of Engineering\n\nThe **Giza Necropolis** in Egypt is perhaps the most famous pyramid site, home to the iconic Great Pyramid of Khufu. Built around 2580–2560 BC, it remained the tallest man-made structure for over 3,800 years.\n\n### Construction Theories\n\nThe methods used to construct these colossal structures are still debated by archaeologists and engineers. Some prominent theories include:\n\n*   **Ramp Systems:** Various ramp designs (straight, spiral, internal) have been proposed to explain how massive stone blocks were moved to such heights.\n*   **Leverage and Rollers:** Simple machines like levers and wooden rollers might have been employed for horizontal movement.\n*   **Water-based Systems:** Some speculative theories suggest the use of water locks or flotation, though evidence is scarce.\n\nFor more in-depth information, you can visit the [Wikipedia page on Egyptian Pyramids](https://en.wikipedia.org/wiki/Egyptian_pyramids).\n\n### Internal Structure of the Great Pyramid\n\nThe Great Pyramid contains several key chambers:\n\n1.  **King's Chamber:** Located near the heart of the pyramid, housing a granite sarcophagus.\n2.  **Queen's Chamber:** Despite its name, it's believed to have held a statue of the pharaoh.\n3.  **Grand Gallery:** A magnificent, corbelled passageway leading to the King's Chamber.\n4.  **Subterranean Chamber:** Carved into the bedrock beneath the pyramid.\n\n```python\n# A simple Python function to calculate pyramid volume (square base)\ndef calculate_pyramid_volume(base_side, height):\n    \"\"\"\n    Calculates the volume of a square-based pyramid.\n    Formula: V = (1/3) * base_side^2 * height\n    \"\"\"\n    volume = (1/3) * (base_side ** 2) * height\n    return volume\n\n# Example usage for a hypothetical pyramid\nside = 230  # meters (approx. base side of Great Pyramid)\nh = 146    # meters (approx. original height of Great Pyramid)\nvol = calculate_pyramid_volume(side, h)\nprint(f\"Approximate volume of the Great Pyramid: {vol:.2f} cubic meters\")\n```\n\n## Mesoamerican Pyramids: Temples to the Gods\n\nAcross the Atlantic, civilizations like the Maya, Aztec, and Teotihuacan also built impressive pyramids, though with distinct purposes and architectural styles.\n\n### Key Differences from Egyptian Pyramids\n\n| Feature             | Egyptian Pyramids                               | Mesoamerican Pyramids                               |\n| :------------------ | :---------------------------------------------- | :-------------------------------------------------- |\n| **Primary Function**| Tombs for pharaohs                              | Platforms for temples, rituals, sacrifices          |\n| **Shape**           | Smooth, pointed apex                            | Stepped, often with a temple structure on top       |\n| **Construction**    | Solid stone blocks                              | Earth and rubble core, faced with stone/stucco      |\n| **Internal Space**  | Burial chambers, passages                       | Often solid, or small rooms for priests/offerings   |\n| **Orientation**     | Cardinal directions, celestial alignment        | Cardinal directions, astronomical events (e.g., equinoxes)|\n\n### The Pyramid of the Sun, Teotihuacan\n\nThis colossal structure in Mexico is one of the largest pyramids in Mesoamerica. It was built around 200 CE and is part of the vast ancient city of Teotihuacan.\n\n![Pyramid of the Sun at Teotihuacan](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Pir%C3%A1mide_del_Sol_desde_la_Calzada_de_los_Muertos.jpg/800px-Pir%C3%A1mide_del_Sol_desde_la_Calzada_de_los_Muertos.jpg \"The majestic Pyramid of the Sun\")\n*Caption: The Pyramid of the Sun, viewed from the Avenue of the Dead.*\n\n### El Castillo (Chichen Itza)\n\nAlso known as the Temple of Kukulcan, this Mayan pyramid is famous for its astronomical alignments. During the spring and autumn equinoxes, shadows create the illusion of a serpent (Kukulcan) slithering down the staircase.\n\nYou can learn more about this phenomenon here: [Chichen Itza Equinox Phenomenon](https://www.chichenitza.com/chichen-itza-equinox).\n\n---\n\nThis Markdown content should provide a good range of elements for your testing purposes!";
+  late final mockStream = MarkdownService.simulateStreaming(contentToMark);
 
   Widget _buildMessageBubble(ChatMessage message) {
 
