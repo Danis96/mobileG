@@ -3,7 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_tts
   irondash_engine_context
+  permission_handler_windows
+  speech_to_text_windows
   super_native_extensions
 )
 

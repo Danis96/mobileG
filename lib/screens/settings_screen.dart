@@ -80,6 +80,17 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
     final LocalizationProvider localizationProvider = Provider.of<LocalizationProvider>(context, listen: false);
     localizationProvider.changeLanguage(Locale(languageCode, ''));
 
+    // Show confirmation
+    final languageFlag = localizationProvider.getLanguageFlag(languageCode);
+    final languageName = LanguageService.getLanguageName(languageCode);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$languageFlag Language changed to $languageName'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
     // Close the expansion after selection
     setState(() {
       _isLanguageExpanded = false;
@@ -128,8 +139,10 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
   List<SettingsItem> _getSettingsItems() {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final LocalizationProvider localizationProvider = Provider.of<LocalizationProvider>(context);
+    final String currentLanguageCode = localizationProvider.currentLocale.languageCode;
+    final String currentLanguageFlag = localizationProvider.getLanguageFlag(currentLanguageCode);
     final String currentLanguageName = LanguageService.getLanguageDisplayName(
-      localizationProvider.currentLocale.languageCode,
+      currentLanguageCode,
       localizationProvider.currentLocale,
     );
 
@@ -138,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
       SettingsItem(title: l10n.baseUrlConfiguration, subtitle: _baseUrl ?? l10n.notConfigured, icon: Icons.link, onTap: _showConfigureModal),
 
       // Preferences Section
-      SettingsItem(title: l10n.language, subtitle: currentLanguageName, icon: Icons.language, onTap: _toggleLanguageExpansion),
+      SettingsItem(title: l10n.language, subtitle: '$currentLanguageFlag  $currentLanguageName', icon: Icons.language, onTap: _toggleLanguageExpansion),
 
       // About Section
       SettingsItem(
@@ -287,9 +300,19 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
                         ),
                         child: Column(
                           children: [
-                            _buildLanguageOption(languageCode: 'en', languageName: l10n.english, isSelected: localizationProvider.isCurrentLanguage('en')),
+                            _buildLanguageOption(
+                              languageCode: 'en',
+                              languageName: '🇬🇧  ${l10n.english}',
+                              description: 'Speech recognition & voice',
+                              isSelected: localizationProvider.isCurrentLanguage('en'),
+                            ),
                             Container(height: 0.5, color: AppColors.borderGray, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                            _buildLanguageOption(languageCode: 'de', languageName: l10n.german, isSelected: localizationProvider.isCurrentLanguage('de')),
+                            _buildLanguageOption(
+                              languageCode: 'de',
+                              languageName: '🇩🇪  ${l10n.german}',
+                              description: 'Spracherkennung & Stimme',
+                              isSelected: localizationProvider.isCurrentLanguage('de'),
+                            ),
                           ],
                         ),
                       ),
@@ -348,40 +371,60 @@ class _SettingsScreenState extends State<SettingsScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildLanguageOption({required String languageCode, required String languageName, required bool isSelected}) {
+  Widget _buildLanguageOption({
+    required String languageCode,
+    required String languageName,
+    String? description,
+    required bool isSelected,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _changeLanguage(languageCode),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               const SizedBox(width: 56), // Align with the main item content
               Expanded(
-                child: Text(
-                  languageName,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.mihFiberGreen : AppColors.textPrimary,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      languageName,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? AppColors.mihFiberGreen : AppColors.textPrimary,
+                      ),
+                    ),
+                    if (description != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected ? AppColors.mihFiberGreen.withOpacity(0.7) : AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               if (isSelected)
                 Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(color: AppColors.mihFiberGreen, borderRadius: BorderRadius.circular(10)),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(color: AppColors.mihFiberGreen, borderRadius: BorderRadius.circular(11)),
                   child: const Icon(Icons.check, size: 14, color: Colors.white),
                 ),
               if (!isSelected)
                 Container(
-                  width: 20,
-                  height: 20,
+                  width: 22,
+                  height: 22,
                   decoration: BoxDecoration(
                     border: Border.all(color: AppColors.borderGray, width: 2),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(11),
                   ),
                 ),
             ],

@@ -66,5 +66,9 @@
         </array>
       </dict>
     </dict>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This app needs access to speech recognition to transcribe your voice messages.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs access to your microphone to record voice messages.</string>
   </dict>
 </plist>

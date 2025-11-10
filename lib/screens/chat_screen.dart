@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:presentationgenie/l10n/app_localizations.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_assets.dart';
 import '../core/services/markdown_service.dart';
+import '../core/services/audio_service.dart';
+import '../core/services/language_service.dart';
+import '../core/providers/localization_provider.dart';
+import '../core/helpers/audio_ui_helper.dart';
 import 'settings_screen.dart';
 
 class ChatMessage {
   final String content;
   final bool isUser;
   final DateTime timestamp;
+  final String id;
 
-  ChatMessage({required this.content, required this.isUser, required this.timestamp});
+  ChatMessage({
+    required this.content,
+    required this.isUser,
+    required this.timestamp,
+    String? id,
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 }
 
 class ChatHistoryItem {
@@ -34,6 +46,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _hasText = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  
+  late AudioService _audioService;
+  String _currentTranscription = '';
 
   // Mock chat history data
   final List<ChatHistoryItem> _chatHistory = [
@@ -54,6 +69,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _audioService = AudioService();
+    _audioService.initializeSpeechToText();
+    
     _messageController.addListener(() {
       setState(() {
         _hasText = _messageController.text.trim().isNotEmpty;
@@ -62,15 +80,92 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Listen to locale changes (this is called on first build and when provider changes)
+    final localizationProvider = Provider.of<LocalizationProvider>(context);
+    if (localizationProvider.isLoaded) {
+      final languageCode = localizationProvider.currentLocale.languageCode;
+      _updateAudioLanguage(languageCode);
+    }
+  }
+
+  /// Update audio service language when locale changes
+  void _updateAudioLanguage(String languageCode) {
+    _audioService.setTtsLanguage(languageCode);
+    debugPrint('🌍 Audio language updated to: $languageCode');
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _audioService.dispose();
     super.dispose();
+  }
+
+  /// Handle microphone button press
+  void _handleMicrophonePress() async {
+    if (_audioService.isListening) {
+      // Stop listening and send the message
+      await _audioService.stopListening();
+      if (_currentTranscription.isNotEmpty) {
+        _messageController.text = _currentTranscription;
+        _sendMessage();
+        _currentTranscription = '';
+      } else {
+        // Show dialog if no text was captured
+        if (mounted) {
+          AudioUIHelper.showNoSpeechDetectedDialog(
+            context,
+            _handleMicrophonePress, // Try again callback
+          );
+        }
+      }
+    } else {
+      // Reset transcription state
+      _currentTranscription = '';
+
+      // Use helper to start listening with all error handling
+      await AudioUIHelper.startListeningWithErrorHandling(
+        context: context,
+        audioService: _audioService,
+        onResult: (text) {
+          setState(() {
+            _currentTranscription = text;
+            _messageController.text = text;
+
+            // Just log the transcription for debugging
+            final confidence = _audioService.confidenceLevel;
+            if (text.length > 5 && confidence > 0) {
+              debugPrint('🎤 Transcribed: "$text" (confidence: ${(confidence * 100).toStringAsFixed(1)}%)');
+            }
+          });
+
+          // Show feedback on first text
+          if (text.isNotEmpty && _currentTranscription.isEmpty) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Listening... Keep speaking!'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          }
+        },
+        onTryAgain: _handleMicrophonePress, // Try again callback
+      );
+    }
   }
 
   void _sendMessage() {
     final String messageText = _messageController.text.trim();
     if (messageText.isEmpty) return;
+
+    // Stop any ongoing TTS playback when sending a new message
+    _audioService.stop();
 
     setState(() {
       _messages.add(ChatMessage(content: messageText, isUser: true, timestamp: DateTime.now()));
@@ -82,6 +177,9 @@ class _ChatScreenState extends State<ChatScreen> {
     // Simulate AI response
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
+        // Stop TTS when new response arrives
+        _audioService.stop();
+        
         setState(() {
           _messages.add(ChatMessage(content: AppLocalizations.of(context)!.aiResponseMessage, isUser: false, timestamp: DateTime.now()));
         });
@@ -172,49 +270,166 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: AppColors.backgroundWhite,
-      appBar: AppBar(
+    return ChangeNotifierProvider.value(
+      value: _audioService,
+      child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: AppColors.backgroundWhite,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            GestureDetector(
-              onTap: _openDrawer,
-              child: const Icon(Icons.menu, color: AppColors.textPrimary),
+        appBar: AppBar(
+          backgroundColor: AppColors.backgroundWhite,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              GestureDetector(
+                onTap: _openDrawer,
+                child: const Icon(Icons.menu, color: AppColors.textPrimary),
+              ),
+              const SizedBox(width: 12),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: _startNewChat,
+              icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary),
             ),
-            const SizedBox(width: 12),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _startNewChat,
-            icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary),
+        drawer: _buildDrawer(),
+        body: Column(
+          children: [
+            // Chat messages
+            Expanded(
+              child: _messages.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        return _messages[index].isUser ? _buildMessageBubble(_messages[index]) : markdownService.renderStreaming(mockStream);
+                      },
+                    ),
+            ),
+
+            // Show transcription indicator if listening
+            if (_audioService.isListening) _buildTranscriptionIndicator(),
+            
+            // Show language hint banner if listening
+            if (_audioService.isListening) _buildLanguageHintBanner(),
+
+            // Message input
+            _buildMessageInput(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Transcription indicator widget
+  Widget _buildTranscriptionIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.mihFiberAccent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.mihFiberGreen, width: 2),
+      ),
+      child: Row(
+        children: [
+          // Animated listening indicator
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.mihFiberGreen),
+            ),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Listening...',
+                  style: TextStyle(
+                    color: AppColors.mihFiberGreen,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                if (_currentTranscription.isNotEmpty)
+                  Text(
+                    _currentTranscription,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          // Audio wave animation
+          _buildAudioWaveAnimation(),
         ],
       ),
-      drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          // Chat messages
-          Expanded(
-            child: _messages.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-              shrinkWrap: true,
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      return _messages[index].isUser ? _buildMessageBubble(_messages[index]) : markdownService.renderStreaming(mockStream);
-                    },
-                  ),
-          ),
+    );
+  }
 
-          // Message input
-          _buildMessageInput(),
+  /// Audio wave animation
+  Widget _buildAudioWaveAnimation() {
+    return Row(
+      children: List.generate(3, (index) {
+        return AnimatedContainer(
+          duration: Duration(milliseconds: 300 + (index * 100)),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          width: 3,
+          height: 12 + (index * 4).toDouble(),
+          decoration: BoxDecoration(
+            color: AppColors.mihFiberGreen,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Language hint banner
+  Widget _buildLanguageHintBanner() {
+    final localizationProvider = Provider.of<LocalizationProvider>(context);
+    final currentLanguageCode = localizationProvider.currentLocale.languageCode;
+    final languageFlag = localizationProvider.getLanguageFlag(currentLanguageCode);
+    final languageName = LanguageService.getLanguageName(currentLanguageCode);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.mihFiberGreen.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.mihFiberGreen.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            languageFlag,
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Speaking in $languageName',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.mihFiberGreen,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -426,39 +641,107 @@ class _ChatScreenState extends State<ChatScreen> {
   late final mockStream = MarkdownService.simulateStreaming(contentToMark);
 
   Widget _buildMessageBubble(ChatMessage message) {
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!message.isUser) ...[Image.asset(AppAssets.genieIcon, width: 32, height: 32), const SizedBox(width: 12)],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
+    return Consumer<AudioService>(
+      builder: (context, audioService, child) {
+        final isPlayingThisMessage = audioService.isSpeaking && 
+                                      audioService.currentSpeakingMessageId == message.id;
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!message.isUser) ...[
+                Image.asset(AppAssets.genieIcon, width: 32, height: 32),
+                const SizedBox(width: 12)
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: message.isUser 
+                      ? CrossAxisAlignment.end 
+                      : CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: message.isUser 
+                            ? AppColors.mihFiberGreen 
+                            : AppColors.backgroundGray,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message.content,
+                            style: TextStyle(
+                              color: message.isUser 
+                                  ? Colors.white 
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Audio playback button
+                          GestureDetector(
+                            onTap: () {
+                              audioService.speak(
+                                message.content,
+                                messageId: message.id,
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isPlayingThisMessage 
+                                      ? Icons.stop_circle_outlined 
+                                      : Icons.play_circle_outline,
+                                  size: 20,
+                                  color: message.isUser 
+                                      ? Colors.white.withOpacity(0.8)
+                                      : AppColors.mihFiberGreen,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isPlayingThisMessage ? 'Stop' : 'Play',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: message.isUser 
+                                        ? Colors.white.withOpacity(0.8)
+                                        : AppColors.mihFiberGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (message.isUser) ...[
+                const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: message.isUser ? AppColors.mihFiberGreen : AppColors.backgroundGray,
+                    color: AppColors.backgroundGray,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(message.content),
+                  child: const Center(
+                    child: Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ),
               ],
-            ),
+            ],
           ),
-          if (message.isUser) ...[
-            const SizedBox(width: 12),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(color: AppColors.backgroundGray, borderRadius: BorderRadius.circular(16)),
-              child: const Center(child: Icon(Icons.person_outline, size: 16, color: AppColors.textSecondary)),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -537,66 +820,133 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessageInput() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundWhite,
-        border: Border(top: BorderSide(color: AppColors.borderGray, width: 1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.backgroundGray,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: AppColors.mihFiberGreen.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 2))],
-              ),
-              child: Row(
-                children: [
-                  // Plus button
-                  IconButton(
-                    onPressed: _showAttachmentMenu,
-                    icon: const Icon(Icons.add, color: AppColors.mihFiberGreen, size: 24),
-                    padding: const EdgeInsets.all(8),
+    return Consumer<AudioService>(
+      builder: (context, audioService, child) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: AppColors.backgroundWhite,
+            border: Border(
+              top: BorderSide(color: AppColors.borderGray, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundGray,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.mihFiberGreen.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
-                  // Text field
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.askAnything,
-                        hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 16),
-                        border: InputBorder.none,
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.mihFiberGreen)),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  child: Row(
+                    children: [
+                      // Plus button
+                      IconButton(
+                        onPressed: _showAttachmentMenu,
+                        icon: const Icon(
+                          Icons.add,
+                          color: AppColors.mihFiberGreen,
+                          size: 24,
+                        ),
+                        padding: const EdgeInsets.all(8),
                       ),
-                      style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
-                      maxLines: null,
-                      textCapitalization: TextCapitalization.sentences,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
+                      // Text field
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: InputDecoration(
+                            hintText: audioService.isListening 
+                                ? 'Listening...' 
+                                : AppLocalizations.of(context)!.askAnything,
+                            hintStyle: TextStyle(
+                              color: audioService.isListening 
+                                  ? AppColors.mihFiberGreen 
+                                  : AppColors.textTertiary,
+                              fontSize: 16,
+                              fontWeight: audioService.isListening 
+                                  ? FontWeight.w500 
+                                  : FontWeight.normal,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 12,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: null,
+                          textCapitalization: TextCapitalization.sentences,
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
+                      ),
+                      // Microphone button
+                      IconButton(
+                        onPressed: _handleMicrophonePress,
+                        icon: audioService.isListening
+                            ? AvatarGlow(
+                                glowColor: AppColors.mihFiberGreen,
+                                duration: const Duration(milliseconds: 2000),
+                                repeat: true,
+                                child: const Icon(
+                                  Icons.mic,
+                                  color: AppColors.error,
+                                  size: 24,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.mic_none,
+                                color: AppColors.mihFiberGreen,
+                                size: 24,
+                              ),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              // Send button
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _hasText
+                      ? AppColors.mihFiberGreen
+                      : AppColors.backgroundGray,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: _hasText
+                      ? [
+                          BoxShadow(
+                            color: AppColors.mihFiberGreen.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: IconButton(
+                  onPressed: _hasText ? _sendMessage : null,
+                  icon: Icon(
+                    Icons.arrow_upward,
+                    color: _hasText ? Colors.white : AppColors.textTertiary,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _hasText ? AppColors.mihFiberGreen : AppColors.backgroundGray,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: _hasText ? [BoxShadow(color: AppColors.mihFiberGreen.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))] : null,
-            ),
-            child: IconButton(
-              onPressed: _hasText ? _sendMessage : null,
-              icon: Icon(Icons.arrow_upward, color: _hasText ? Colors.white : AppColors.textTertiary, size: 20),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
